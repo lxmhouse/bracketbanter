@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Green Bracket Bot</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        #iframe-container {
+            width: 80%;
+            height: 100%;
+            position: relative;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #jitsi-container {
+            width: 20%;
+            height: 100%;
+            display: none;
+        }
+        #jitsi-container.loaded {
+            display: block;
+        }
+        #passwordOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #passwordForm {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #passwordInput {
+            padding: 5px;
+            margin: 10px 0;
+        }
+        #submitPassword {
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="passwordOverlay">
+        <div id="passwordForm">
+            <h2>Enter Password</h2>
+            <input type="password" id="passwordInput" placeholder="Enter password">
+            <br>
+            <button id="submitPassword">Submit</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="iframe-container">
+            <iframe src="https://green-bracketbot.tailfdd19e.ts.net" allowfullscreen></iframe>
+        </div>
+        <div id="jitsi-container"></div>
+    </div>
+    <div id="loading" class="loading hidden">Loading video chat...</div>
+
+    <script src="https://jitsi.member.fsf.org/external_api.js"></script>
+    <script>
+        document.getElementById('submitPassword').addEventListener('click', function() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === 'lxm') {
+                document.getElementById('passwordOverlay').classList.add('hidden');
+                initializeJitsi();
+            } else {
+                alert('Incorrect password');
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('submitPassword').click();
+            }
+        });
+
+        function initializeJitsi() {
+            const domain = "jitsi.member.fsf.org"; // We use "jitsi.member.fsf.org" instead of "meet.jit.si" because the latter is blocked
+            const options = {
+                roomName: "GreenBracketBotRoom",
+                width: "100%",
+                height: "100%",
+                parentNode: document.getElementById('jitsi-container'),
+                configOverwrite: {
+                    enableWelcomePage: false,
+                    prejoinPageEnabled: false,
+                    resolution: 480,
+                    startWithVideoMuted: true,
+                    startWithAudioMuted: true,
+                    disableInviteFunctions: true,
+                    toolbarButtons: ["microphone", "camera", "tileview"]
+                },
+                interfaceConfigOverwrite: {
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false,
+                    SHOW_CHROME_EXTENSION_BANNER: false,
+                    VERTICAL_FILMSTRIP: true,
+                    SETTINGS_SECTIONS: ["devices"],
+                    filmStripOnly: false,
+                    FILM_STRIP_MAX_HEIGHT: 80,
+                    DEFAULT_BACKGROUND: "transparent",
+                    MOBILE_APP_PROMO: false,
+                    DISABLE_FOCUS_INDICATOR: true,
+                    DISABLE_DOMINANT_SPEAKER_INDICATOR: true,
+                    DISPLAY_WELCOME_PAGE_CONTENT: false,
+                    TILE_VIEW_MAX_COLUMNS: 1,
+                    DEFAULT_REMOTE_DISPLAY_NAME: "Player",
+                    DISABLE_VIDEO_BACKGROUND: true,
+                    VIDEO_QUALITY_LABEL_DISABLED: true,
+                    CONNECTION_INDICATOR_DISABLED: true,
+                    HIDE_KICK_BUTTON_FOR_GUESTS: true,
+                    HIDE_INVITE_MORE_HEADER: true
+                }
+            };
+
+            const loadingElement = document.getElementById('loading');
+            loadingElement.classList.remove('hidden');
+
+            try {
+                if (!window.JitsiMeetExternalAPI) {
+                    throw new Error('JitsiMeetExternalAPI not loaded');
+                }
+
+                const jitsi = new JitsiMeetExternalAPI(domain, options);
+                
+                jitsi.addListener('videoConferenceJoined', () => {
+                    console.log('Conference joined');
+                    loadingElement.classList.add('hidden');
+                    document.getElementById('jitsi-container').classList.add('loaded');
+                });
+
+                jitsi.addListener('videoConferenceLeft', () => {
+                    console.log('Conference left');
+                    document.getElementById('jitsi-container').classList.remove('loaded');
+                });
+
+                jitsi.addListener('participantJoined', () => {
+                    console.log('Participant joined');
+                });
+
+                jitsi.addListener('participantLeft', () => {
+                    console.log('Participant left');
+                });
+
+                jitsi.addListener('error', (error) => {
+                    console.error('Jitsi error:', error);
+                    loadingElement.textContent = 'Error loading video chat. Please refresh.';
+                });
+
+            } catch (error) {
+                console.error('Failed to initialize Jitsi:', error);
+                loadingElement.textContent = 'Failed to load video chat. Please refresh.';
+            }
+        }
+    </script>
+</body>
+</html>
